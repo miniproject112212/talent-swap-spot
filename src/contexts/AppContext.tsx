@@ -1,9 +1,9 @@
 
 import React, { ReactNode } from 'react';
-import { UserProvider } from './providers/UserProvider';
-import { SkillProvider } from './providers/SkillProvider';
-import { MessageProvider } from './providers/MessageProvider';
-import { ScheduleProvider } from './providers/ScheduleProvider';
+import { UserProvider, useUser } from './providers/UserProvider';
+import { SkillProvider, useSkill } from './providers/SkillProvider';
+import { MessageProvider, useMessage } from './providers/MessageProvider';
+import { ScheduleProvider, useSchedule } from './providers/ScheduleProvider';
 
 // Re-export all hooks for easier access
 export { useUser } from './providers/UserProvider';
