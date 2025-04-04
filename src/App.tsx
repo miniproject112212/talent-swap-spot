@@ -14,6 +14,7 @@ import Messages from "./pages/Messages";
 import SkillDetail from "./pages/SkillDetail";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import Schedule from "./pages/Schedule";
 
 // Components
 import Navbar from "./components/Navbar";
@@ -40,6 +41,8 @@ const App = () => (
                 <Route path="/messages/:userId" element={<Messages />} />
                 <Route path="/skill/:skillId" element={<SkillDetail />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/schedule" element={<Schedule />} />
+                <Route path="/schedule/:userId" element={<Schedule />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>

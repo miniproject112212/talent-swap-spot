@@ -4,7 +4,13 @@ import { useNavigate } from "react-router-dom";
 import Home from "./Home";
 
 const Index = () => {
-  // This component simply renders the Home component since it's our main page
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Redirect to home page
+    navigate('/');
+  }, [navigate]);
+  
   return <Home />;
 };
 

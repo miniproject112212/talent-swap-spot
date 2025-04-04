@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
@@ -5,8 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { Send, ArrowLeft, Search } from 'lucide-react';
+import { Send, ArrowLeft, Search, Video, Calendar, X, PhoneCall } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card } from '@/components/ui/card';
+import { Message as MessageType } from '@/types';
 
 export default function Messages() {
   const { userId } = useParams();
@@ -18,12 +22,23 @@ export default function Messages() {
     getUserById, 
     getConversation, 
     getMessagesForConversation,
-    sendMessage 
+    sendMessage,
+    initiateVideoCall,
+    acceptVideoCall,
+    rejectVideoCall
   } = useApp();
+  
   const [activeConversation, setActiveConversation] = useState<string | null>(userId || null);
   const [searchQuery, setSearchQuery] = useState('');
   const [messageInput, setMessageInput] = useState('');
+  const [isVideoCallDialogOpen, setIsVideoCallDialogOpen] = useState(false);
+  const [isIncomingCallDialogOpen, setIsIncomingCallDialogOpen] = useState(false);
+  const [isVideoCallActive, setIsVideoCallActive] = useState(false);
+  const [incomingCallFrom, setIncomingCallFrom] = useState<string | null>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
   
   const activeUser = activeConversation ? getUserById(activeConversation) : null;
   const activeConversationObj = activeConversation && currentUser
@@ -64,6 +79,26 @@ export default function Messages() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeMessages]);
   
+  // Check for video call requests
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const latestMessages = activeMessages
+      .filter(msg => msg.receiverId === currentUser.id && !msg.read)
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    
+    const videoRequest = latestMessages.find(msg => msg.type === 'video-request');
+    if (videoRequest && !isIncomingCallDialogOpen && !isVideoCallActive) {
+      setIncomingCallFrom(videoRequest.senderId);
+      setIsIncomingCallDialogOpen(true);
+    }
+    
+    const videoAccepted = latestMessages.find(msg => msg.type === 'video-accepted');
+    if (videoAccepted && !isVideoCallActive) {
+      startVideoCall();
+    }
+  }, [activeMessages, currentUser]);
+  
   const handleSelectConversation = (userId: string) => {
     setActiveConversation(userId);
     navigate(`/messages/${userId}`);
@@ -86,6 +121,77 @@ export default function Messages() {
     if (e.key === 'Enter') {
       handleSendMessage();
     }
+  };
+  
+  const handleInitiateVideoCall = () => {
+    if (!currentUser || !activeConversation) return;
+    
+    initiateVideoCall(currentUser.id, activeConversation);
+    setIsVideoCallDialogOpen(true);
+  };
+  
+  const handleAcceptVideoCall = () => {
+    if (!currentUser || !incomingCallFrom) return;
+    
+    acceptVideoCall(currentUser.id, incomingCallFrom);
+    setIsIncomingCallDialogOpen(false);
+    startVideoCall();
+  };
+  
+  const handleRejectVideoCall = () => {
+    if (!currentUser || !incomingCallFrom) return;
+    
+    rejectVideoCall(currentUser.id, incomingCallFrom);
+    setIsIncomingCallDialogOpen(false);
+    setIncomingCallFrom(null);
+  };
+  
+  const startVideoCall = async () => {
+    setIsVideoCallActive(true);
+    setIsVideoCallDialogOpen(true);
+    
+    try {
+      // Get user media (camera and microphone)
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: true 
+      });
+      
+      // Display local video
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = stream;
+      }
+      
+      // In a real app, we'd connect to a WebRTC service here
+      // For demo purposes, we're just showing the local video
+      // and simulating a remote connection
+      
+      // Simulate remote video after a delay
+      setTimeout(() => {
+        if (remoteVideoRef.current && localVideoRef.current) {
+          remoteVideoRef.current.srcObject = localVideoRef.current.srcObject;
+        }
+      }, 2000);
+    } catch (err) {
+      console.error("Error accessing media devices:", err);
+    }
+  };
+  
+  const endVideoCall = () => {
+    // Stop all tracks in the stream
+    if (localVideoRef.current && localVideoRef.current.srcObject) {
+      const stream = localVideoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    
+    if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
+      const stream = remoteVideoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    
+    // Reset video call state
+    setIsVideoCallActive(false);
+    setIsVideoCallDialogOpen(false);
   };
   
   if (!currentUser) {
@@ -148,7 +254,10 @@ export default function Messages() {
                           </span>
                         </div>
                         <p className="text-sm text-muted-foreground truncate">
-                          {conversation.lastMessage.content}
+                          {conversation.lastMessage.type === 'video-request' ? '📹 Video call request' : 
+                           conversation.lastMessage.type === 'video-accepted' ? '📹 Video call accepted' : 
+                           conversation.lastMessage.type === 'video-rejected' ? '📹 Video call declined' : 
+                           conversation.lastMessage.content}
                         </p>
                       </div>
                     </div>
@@ -208,9 +317,25 @@ export default function Messages() {
                   <AvatarImage src={activeUser.avatar} alt={activeUser.name} />
                   <AvatarFallback>{activeUser.name.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-grow">
                   <p className="font-medium">{activeUser.name}</p>
                   <p className="text-xs text-muted-foreground">{activeUser.location}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => navigate(`/schedule/${activeUser.id}`)}
+                  >
+                    <Calendar className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={handleInitiateVideoCall}
+                  >
+                    <Video className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
               
@@ -220,6 +345,47 @@ export default function Messages() {
                     activeMessages.map(message => {
                       const isFromMe = message.senderId === currentUser.id;
                       
+                      // Special message types
+                      if (message.type && message.type !== 'text') {
+                        return (
+                          <div key={message.id} className="flex justify-center">
+                            <div className="bg-gray-100 text-skillswap-darkGray rounded-lg px-4 py-2 text-sm">
+                              {message.type === 'video-request' ? (
+                                <div className="flex items-center gap-2">
+                                  <Video className="h-4 w-4" />
+                                  <span>
+                                    {isFromMe 
+                                      ? "You requested a video call" 
+                                      : `${getUserById(message.senderId)?.name} requested a video call`}
+                                  </span>
+                                </div>
+                              ) : message.type === 'video-accepted' ? (
+                                <div className="flex items-center gap-2">
+                                  <Video className="h-4 w-4" />
+                                  <span>
+                                    {isFromMe 
+                                      ? "You accepted the video call" 
+                                      : `${getUserById(message.senderId)?.name} accepted your video call`}
+                                  </span>
+                                </div>
+                              ) : message.type === 'video-rejected' ? (
+                                <div className="flex items-center gap-2">
+                                  <X className="h-4 w-4" />
+                                  <span>
+                                    {isFromMe 
+                                      ? "You declined the video call" 
+                                      : `${getUserById(message.senderId)?.name} declined your video call`}
+                                  </span>
+                                </div>
+                              ) : (
+                                message.content
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      // Regular text message
                       return (
                         <div
                           key={message.id}
@@ -282,6 +448,97 @@ export default function Messages() {
           )}
         </div>
       </div>
+      
+      {/* Video Call Dialog */}
+      <Dialog open={isVideoCallDialogOpen} onOpenChange={open => {
+        if (!open) endVideoCall();
+        setIsVideoCallDialogOpen(open);
+      }}>
+        <DialogContent className="max-w-3xl h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Video className="h-5 w-5" />
+                Video Call {activeUser ? `with ${activeUser.name}` : ''}
+              </div>
+              <Button variant="destructive" size="sm" onClick={endVideoCall}>
+                End Call
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col h-full justify-center gap-4 relative">
+            {/* Remote video (big) */}
+            <div className="bg-gray-900 rounded-lg h-[calc(100%-100px)] overflow-hidden">
+              <video 
+                ref={remoteVideoRef}
+                autoPlay 
+                playsInline
+                className="w-full h-full object-cover"
+              />
+            </div>
+            
+            {/* Local video (small) */}
+            <div className="absolute bottom-4 right-4 w-1/4 rounded-lg overflow-hidden border-2 border-white shadow-lg">
+              <video 
+                ref={localVideoRef}
+                autoPlay 
+                playsInline
+                muted
+                className="w-full object-cover"
+              />
+            </div>
+            
+            {/* Controls */}
+            <div className="flex justify-center gap-4">
+              <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
+                <PhoneCall className="h-6 w-6" />
+              </Button>
+              <Button variant="destructive" size="icon" className="rounded-full h-12 w-12" onClick={endVideoCall}>
+                <X className="h-6 w-6" />
+              </Button>
+              <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
+                <Video className="h-6 w-6" />
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Incoming Call Dialog */}
+      <Dialog open={isIncomingCallDialogOpen} onOpenChange={setIsIncomingCallDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Incoming Video Call</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center py-8">
+            <Avatar className="h-24 w-24 mb-4">
+              <AvatarImage 
+                src={incomingCallFrom ? getUserById(incomingCallFrom)?.avatar : undefined} 
+                alt="Caller" 
+              />
+              <AvatarFallback className="text-3xl">
+                {incomingCallFrom ? getUserById(incomingCallFrom)?.name.charAt(0) : '?'}
+              </AvatarFallback>
+            </Avatar>
+            <h3 className="text-xl font-medium mb-6">
+              {incomingCallFrom ? getUserById(incomingCallFrom)?.name : 'Someone'} is calling you
+            </h3>
+            
+            <div className="flex gap-4">
+              <Button variant="destructive" onClick={handleRejectVideoCall}>
+                <X className="h-4 w-4 mr-2" />
+                Decline
+              </Button>
+              <Button variant="default" onClick={handleAcceptVideoCall}>
+                <Video className="h-4 w-4 mr-2" />
+                Accept
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
