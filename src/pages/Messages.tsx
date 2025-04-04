@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
@@ -61,7 +60,6 @@ export default function Messages() {
     }
   }, [userId, activeConversation, navigate]);
   
-  // Auto-scroll to bottom of messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeMessages]);
@@ -84,7 +82,6 @@ export default function Messages() {
     return otherId ? getUserById(otherId) : null;
   };
 
-  // Handle Enter key in message input  
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSendMessage();
@@ -105,16 +102,17 @@ export default function Messages() {
       <h1 className="text-2xl font-bold mb-6">Messages</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[75vh]">
-        {/* Conversations List */}
         <div className="md:col-span-1 border rounded-lg overflow-hidden bg-white shadow-sm flex flex-col">
           <div className="p-3 border-b">
-            <Input
-              placeholder="Search users..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-              prefix={<Search className="h-4 w-4 text-muted-foreground mr-2" />}
-            />
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8"
+              />
+            </div>
           </div>
           
           <ScrollArea className="flex-grow">
@@ -194,11 +192,9 @@ export default function Messages() {
           </ScrollArea>
         </div>
         
-        {/* Message Area */}
         <div className="md:col-span-2 border rounded-lg overflow-hidden bg-white shadow-sm flex flex-col">
           {activeUser ? (
             <>
-              {/* Conversation Header */}
               <div className="p-3 border-b flex items-center gap-3">
                 <Button 
                   variant="ghost" 
@@ -218,7 +214,6 @@ export default function Messages() {
                 </div>
               </div>
               
-              {/* Messages */}
               <ScrollArea className="flex-grow p-4">
                 <div className="space-y-4">
                   {activeMessages.length > 0 ? (
@@ -262,7 +257,6 @@ export default function Messages() {
                 </div>
               </ScrollArea>
               
-              {/* Message Input */}
               <div className="p-3 border-t flex gap-2">
                 <Input
                   placeholder="Type a message..."
