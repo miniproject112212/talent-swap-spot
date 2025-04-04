@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Skill } from '@/types';
 import { mockSkills } from '@/data/mockData';

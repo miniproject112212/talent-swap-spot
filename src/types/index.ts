@@ -1,7 +1,7 @@
-
 export type User = {
   id: string;
   name: string;
+  email?: string; // Add email property
   bio: string;
   avatar: string;
   location: string;
@@ -18,6 +18,8 @@ export type Skill = {
   description: string;
   level: SkillLevel;
   userId?: string;
+  image?: string; // Add image property
+  type?: 'teach' | 'learn'; // Add type property
 };
 
 export type SkillCategory = 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
@@ -14,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Upload, UserCircle, Camera } from 'lucide-react';
 
 export default function Register() {
-  const { users, login } = useApp();
+  const { users, login, registerUser } = useApp();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
@@ -66,21 +65,17 @@ export default function Register() {
     }
     
     // For demo purposes, create a new user ID and register
-    const newUser: User = {
-      id: `u${users.length + 1}`,
+    const newUserData = {
       name,
       email,
       bio,
       location,
-      avatar: avatar || `https://source.unsplash.com/random/400x400/?indian,person`,
-      joinedDate: new Date(),
-      skillsToTeach: [],
-      skillsToLearn: []
+      avatar: avatar || `https://source.unsplash.com/random/400x400/?indian,person`
     };
     
     // In a real app, you would save this to a database
-    // For demo, we'll use the login function to set as current user
-    login(newUser.id);
+    // For demo, we'll use the registerUser function
+    const newUser = registerUser(newUserData);
     
     toast({
       title: "Registration successful",

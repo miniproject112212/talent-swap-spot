@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import SkillCard from '@/components/SkillCard';
-import { MessageCircle, Plus, MapPin, Calendar, Edit, Camera, Save } from 'lucide-react';
+import { MessageCircle, Plus, MapPin, Calendar, Edit, Camera, Save, Upload } from 'lucide-react'; // Add Upload import
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
