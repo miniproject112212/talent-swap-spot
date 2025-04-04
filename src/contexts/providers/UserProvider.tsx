@@ -60,6 +60,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
   
   const registerUser = (userData: Omit<User, 'id' | 'joinedDate' | 'skillsToTeach' | 'skillsToLearn'>) => {
+    // Check if email already exists
+    if (userData.email && users.some(user => user.email === userData.email)) {
+      toast({
+        title: "Registration failed",
+        description: "This email is already registered",
+        variant: "destructive"
+      });
+      throw new Error("Email already registered");
+    }
+    
+    // Create new user
     const newUser: User = {
       ...userData,
       id: `u${users.length + 1}`,
@@ -68,7 +79,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
       skillsToLearn: []
     };
     
+    // Update users list
     setUsers(prevUsers => [...prevUsers, newUser]);
+    
+    // Set as current user
     setCurrentUser(newUser);
     
     toast({

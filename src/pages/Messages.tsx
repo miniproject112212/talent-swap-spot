@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
@@ -11,6 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { Message as MessageType } from '@/types';
+import { toast } from 'react-toastify';
 
 export default function Messages() {
   const { userId } = useParams();
@@ -79,7 +79,6 @@ export default function Messages() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeMessages]);
   
-  // Check for video call requests
   useEffect(() => {
     if (!currentUser) return;
     
@@ -108,8 +107,30 @@ export default function Messages() {
   const handleSendMessage = () => {
     if (!currentUser || !activeConversation || !messageInput.trim()) return;
     
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage = {
+      id: tempId,
+      senderId: currentUser.id,
+      receiverId: activeConversation,
+      content: messageInput.trim(),
+      timestamp: new Date(),
+      read: false,
+      type: 'text' as const
+    };
+    
+    if (activeConversationObj) {
+      const conversationMessages = [...getMessagesForConversation(activeConversationObj.id), tempMessage];
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+    
     sendMessage(currentUser.id, activeConversation, messageInput.trim());
     setMessageInput('');
+    
+    toast({
+      title: "Message sent",
+      description: "Your message has been delivered",
+      duration: 2000,
+    });
   };
   
   const getOtherParticipant = (conversation: typeof conversations[0]) => {
@@ -151,22 +172,15 @@ export default function Messages() {
     setIsVideoCallDialogOpen(true);
     
     try {
-      // Get user media (camera and microphone)
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: true, 
         audio: true 
       });
       
-      // Display local video
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
       
-      // In a real app, we'd connect to a WebRTC service here
-      // For demo purposes, we're just showing the local video
-      // and simulating a remote connection
-      
-      // Simulate remote video after a delay
       setTimeout(() => {
         if (remoteVideoRef.current && localVideoRef.current) {
           remoteVideoRef.current.srcObject = localVideoRef.current.srcObject;
@@ -178,7 +192,6 @@ export default function Messages() {
   };
   
   const endVideoCall = () => {
-    // Stop all tracks in the stream
     if (localVideoRef.current && localVideoRef.current.srcObject) {
       const stream = localVideoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => track.stop());
@@ -189,7 +202,6 @@ export default function Messages() {
       stream.getTracks().forEach(track => track.stop());
     }
     
-    // Reset video call state
     setIsVideoCallActive(false);
     setIsVideoCallDialogOpen(false);
   };
@@ -205,7 +217,7 @@ export default function Messages() {
   
   return (
     <main className="container-custom max-w-6xl py-8">
-      <h1 className="text-2xl font-bold mb-6">Messages</h1>
+      <h1 className="text-2xl font-bold mb-6 text-orange-600">Messages</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[75vh]">
         <div className="md:col-span-1 border rounded-lg overflow-hidden bg-white shadow-sm flex flex-col">
@@ -345,7 +357,6 @@ export default function Messages() {
                     activeMessages.map(message => {
                       const isFromMe = message.senderId === currentUser.id;
                       
-                      // Special message types
                       if (message.type && message.type !== 'text') {
                         return (
                           <div key={message.id} className="flex justify-center">
@@ -385,7 +396,6 @@ export default function Messages() {
                         );
                       }
                       
-                      // Regular text message
                       return (
                         <div
                           key={message.id}
@@ -395,20 +405,27 @@ export default function Messages() {
                             className={`
                               max-w-[70%] p-3 rounded-lg
                               ${isFromMe 
-                                ? 'bg-skillswap-teal text-white' 
+                                ? 'bg-orange-500 text-white' 
                                 : 'bg-gray-100 text-skillswap-darkGray'}
                             `}
                           >
                             <p>{message.content}</p>
-                            <p className={`
-                              text-xs mt-1
-                              ${isFromMe ? 'text-white/80' : 'text-gray-500'}
-                            `}>
-                              {message.timestamp.toLocaleTimeString([], { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              })}
-                            </p>
+                            <div className="flex justify-between items-center mt-1">
+                              <p className={`
+                                text-xs
+                                ${isFromMe ? 'text-white/80' : 'text-gray-500'}
+                              `}>
+                                {message.timestamp.toLocaleTimeString([], { 
+                                  hour: '2-digit', 
+                                  minute: '2-digit' 
+                                })}
+                              </p>
+                              {isFromMe && (
+                                <span className={`text-xs ${message.read ? 'text-white/80' : 'text-white/60'}`}>
+                                  {message.read ? 'Read' : 'Delivered'}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
@@ -449,7 +466,6 @@ export default function Messages() {
         </div>
       </div>
       
-      {/* Video Call Dialog */}
       <Dialog open={isVideoCallDialogOpen} onOpenChange={open => {
         if (!open) endVideoCall();
         setIsVideoCallDialogOpen(open);
@@ -468,7 +484,6 @@ export default function Messages() {
           </DialogHeader>
           
           <div className="flex flex-col h-full justify-center gap-4 relative">
-            {/* Remote video (big) */}
             <div className="bg-gray-900 rounded-lg h-[calc(100%-100px)] overflow-hidden">
               <video 
                 ref={remoteVideoRef}
@@ -478,7 +493,6 @@ export default function Messages() {
               />
             </div>
             
-            {/* Local video (small) */}
             <div className="absolute bottom-4 right-4 w-1/4 rounded-lg overflow-hidden border-2 border-white shadow-lg">
               <video 
                 ref={localVideoRef}
@@ -489,7 +503,6 @@ export default function Messages() {
               />
             </div>
             
-            {/* Controls */}
             <div className="flex justify-center gap-4">
               <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
                 <PhoneCall className="h-6 w-6" />
@@ -505,7 +518,6 @@ export default function Messages() {
         </DialogContent>
       </Dialog>
       
-      {/* Incoming Call Dialog */}
       <Dialog open={isIncomingCallDialogOpen} onOpenChange={setIsIncomingCallDialogOpen}>
         <DialogContent>
           <DialogHeader>
