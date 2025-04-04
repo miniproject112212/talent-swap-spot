@@ -5,65 +5,65 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 215 25% 27%;
+    --background: 36 100% 98%;
+    --foreground: 22 65% 25%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 27%;
+    --card-foreground: 22 65% 25%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
+    --popover-foreground: 22 65% 25%;
 
-    --primary: 174 82% 31%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 22 92% 50%;
+    --primary-foreground: 36 100% 97%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 215 25% 27%;
+    --secondary: 36 70% 92%;
+    --secondary-foreground: 22 65% 25%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 36 70% 92%;
+    --muted-foreground: 22 50% 40%;
 
-    --accent: 220 14% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 340 82% 52%;
+    --accent-foreground: 36 100% 97%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 36 100% 97%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 174 82% 31%;
+    --border: 22 30% 90%;
+    --input: 22 30% 90%;
+    --ring: 22 92% 50%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 22 50% 10%;
+    --foreground: 36 100% 97%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 22 50% 10%;
+    --card-foreground: 36 100% 97%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 22 50% 10%;
+    --popover-foreground: 36 100% 97%;
 
-    --primary: 174 82% 31%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 22 92% 50%;
+    --primary-foreground: 36 100% 97%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 22 25% 20%;
+    --secondary-foreground: 36 100% 97%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 22 25% 20%;
+    --muted-foreground: 22 25% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 340 82% 52%;
+    --accent-foreground: 36 100% 97%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 36 100% 97%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 174 82% 31%;
+    --border: 22 25% 20%;
+    --input: 22 25% 20%;
+    --ring: 22 92% 50%;
   }
 }
 
@@ -79,14 +79,31 @@
 
 @layer components {
   .skill-card {
-    @apply bg-white rounded-lg shadow-md transition-all hover:shadow-lg hover:translate-y-[-2px] p-6;
+    @apply bg-white rounded-lg shadow-md transition-all hover:shadow-lg hover:translate-y-[-2px] p-6 border-2 border-primary/20;
   }
 
   .skill-badge {
-    @apply bg-skillswap-lightGray text-skillswap-darkGray text-xs px-3 py-1 rounded-full font-medium;
+    @apply bg-secondary text-primary text-xs px-3 py-1 rounded-full font-medium;
   }
 
   .container-custom {
     @apply px-4 md:px-6 lg:px-8 max-w-7xl mx-auto;
+  }
+  
+  .indian-pattern {
+    background-color: #fff;
+    background-image: 
+      radial-gradient(#FF9933 2px, transparent 2px),
+      radial-gradient(#138808 2px, transparent 2px);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
+    opacity: 0.1;
+  }
+  
+  .indian-border {
+    @apply border-2 border-primary;
+    background-image: repeating-linear-gradient(45deg, var(--primary) 0, var(--primary) 1px, transparent 0, transparent 50%);
+    background-size: 10px 10px;
+    background-position: 0 0;
   }
 }

@@ -63,12 +63,15 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				skillswap: {
-					teal: '#0D9488',
-					navy: '#0F172A',
-					coral: '#F97316',
-					lightGray: '#F1F5F9',
-					darkGray: '#334155',
+				indian: {
+					saffron: '#FF9933',
+					white: '#FFFFFF',
+					green: '#138808',
+					navy: '#000080',
+					red: '#FF0000',
+					gold: '#FFD700',
+					maroon: '#800000',
+					orange: '#FFA500'
 				}
 			},
 			borderRadius: {

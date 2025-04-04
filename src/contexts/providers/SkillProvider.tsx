@@ -27,9 +27,26 @@ export function SkillProvider({ children }: { children: ReactNode }) {
       ...skill,
       id: `s${skills.length + 1}`,
       userId: currentUser.id,
+      // Ensure there's an image, even if none was provided
+      image: skill.image || `https://source.unsplash.com/random/800x600/?${skill.name.split(' ')[0]},india`
     };
     
     setSkills([...skills, newSkill]);
+    
+    // Also add the skill to the user's profile
+    const user = users.find(u => u.id === currentUser.id);
+    if (user) {
+      const updatedUser = { ...user };
+      if (currentUser.id === skill.userId) {
+        if (skill.type === 'teach') {
+          updatedUser.skillsToTeach = [...updatedUser.skillsToTeach, newSkill];
+        } else {
+          updatedUser.skillsToLearn = [...updatedUser.skillsToLearn, newSkill];
+        }
+        updateUser(updatedUser);
+      }
+    }
+    
     toast({
       title: "Skill added",
       description: `${skill.name} has been added successfully`,

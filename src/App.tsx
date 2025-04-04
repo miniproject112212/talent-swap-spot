@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import Messages from "./pages/Messages";
 import SkillDetail from "./pages/SkillDetail";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import Schedule from "./pages/Schedule";
 
@@ -41,6 +42,7 @@ const App = () => (
                 <Route path="/messages/:userId" element={<Messages />} />
                 <Route path="/skill/:skillId" element={<SkillDetail />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
                 <Route path="/schedule" element={<Schedule />} />
                 <Route path="/schedule/:userId" element={<Schedule />} />
                 <Route path="*" element={<NotFound />} />

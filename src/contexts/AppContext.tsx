@@ -40,6 +40,8 @@ export function useApp() {
     login: user.login,
     logout: user.logout,
     getUserById: user.getUserById,
+    updateUser: user.updateUser,
+    registerUser: user.registerUser,
     
     // Skill context
     skills: skill.skills,

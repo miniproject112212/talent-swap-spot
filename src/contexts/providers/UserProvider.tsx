@@ -11,13 +11,14 @@ type UserContextType = {
   logout: () => void;
   getUserById: (userId: string) => User | undefined;
   updateUser: (updatedUser: User) => void;
+  registerUser: (userData: Omit<User, 'id' | 'joinedDate' | 'skillsToTeach' | 'skillsToLearn'>) => User;
 };
 
 export const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>(mockUsers);
-  const [currentUser, setCurrentUser] = useState<User | null>(mockUsers[0]); // Default logged in for demo
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const { toast } = useToast();
 
   const login = (userId: string) => {
@@ -51,6 +52,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (currentUser && currentUser.id === updatedUser.id) {
       setCurrentUser(updatedUser);
     }
+    
+    toast({
+      title: "Profile updated",
+      description: "Your profile has been updated successfully",
+    });
+  };
+  
+  const registerUser = (userData: Omit<User, 'id' | 'joinedDate' | 'skillsToTeach' | 'skillsToLearn'>) => {
+    const newUser: User = {
+      ...userData,
+      id: `u${users.length + 1}`,
+      joinedDate: new Date(),
+      skillsToTeach: [],
+      skillsToLearn: []
+    };
+    
+    setUsers(prevUsers => [...prevUsers, newUser]);
+    setCurrentUser(newUser);
+    
+    toast({
+      title: "Registration successful",
+      description: `Welcome to SkillSwap, ${newUser.name}!`,
+    });
+    
+    return newUser;
   };
 
   return (
@@ -62,6 +88,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         logout,
         getUserById,
         updateUser,
+        registerUser
       }}
     >
       {children}

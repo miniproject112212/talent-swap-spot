@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import SkillCard from '@/components/SkillCard';
-import { MessageCircle, Plus, MapPin, Calendar } from 'lucide-react';
+import { MessageCircle, Plus, MapPin, Calendar, Edit, Camera, Save } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
@@ -16,20 +16,28 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { allSkillCategories, allSkillLevels } from '@/data/mockData';
-import { Skill, SkillCategory, SkillLevel } from '@/types';
+import { Skill, SkillCategory, SkillLevel, User } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Profile() {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const { currentUser, getUserById, addSkill, addSkillToUser, deleteSkill } = useApp();
+  const { toast } = useToast();
+  const { currentUser, getUserById, addSkill, addSkillToUser, deleteSkill, updateUser } = useApp();
   const [addSkillDialogOpen, setAddSkillDialogOpen] = useState(false);
   const [formType, setFormType] = useState<'teach' | 'learn'>('teach');
+  const [editMode, setEditMode] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Form state
   const [skillName, setSkillName] = useState('');
   const [skillCategory, setSkillCategory] = useState<SkillCategory>('Technology');
   const [skillLevel, setSkillLevel] = useState<SkillLevel>('Beginner');
   const [skillDescription, setSkillDescription] = useState('');
+  const [skillImage, setSkillImage] = useState<string | null>(null);
+  
+  // Profile edit state
+  const [editedUser, setEditedUser] = useState<User | null>(null);
   
   // Get profile to display (current user or requested user)
   const profileUser = userId ? getUserById(userId) : currentUser;
@@ -53,6 +61,7 @@ export default function Profile() {
       description: skillDescription,
       level: skillLevel,
       userId: currentUser.id,
+      image: skillImage || `https://source.unsplash.com/random/800x600/?${skillName.split(' ')[0]},india`
     };
     
     addSkill(newSkill);
@@ -62,34 +71,151 @@ export default function Profile() {
     setSkillCategory('Technology');
     setSkillLevel('Beginner');
     setSkillDescription('');
+    setSkillImage(null);
     setAddSkillDialogOpen(false);
+  };
+  
+  const handleSkillImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setSkillImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editedUser) return;
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      setEditedUser({
+        ...editedUser,
+        avatar: reader.result as string
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  const startEditing = () => {
+    if (!profileUser) return;
+    setEditedUser({...profileUser});
+    setEditMode(true);
+  };
+  
+  const saveProfile = () => {
+    if (!editedUser) return;
+    
+    updateUser(editedUser);
+    setEditMode(false);
+    
+    toast({
+      title: "Profile updated",
+      description: "Your profile has been updated successfully",
+    });
   };
   
   return (
     <main className="container-custom py-8">
-      <Card>
+      <Card className="border-2 border-primary/20">
         <CardHeader className="pt-6">
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-            <Avatar className="w-24 h-24">
-              <AvatarImage src={profileUser.avatar} alt={profileUser.name} />
-              <AvatarFallback className="text-3xl">{profileUser.name.charAt(0)}</AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="w-24 h-24 border-2 border-primary/50">
+                {editMode ? (
+                  <AvatarImage src={editedUser?.avatar} alt={editedUser?.name} />
+                ) : (
+                  <AvatarImage src={profileUser.avatar} alt={profileUser.name} />
+                )}
+                <AvatarFallback className="text-3xl bg-secondary text-primary">
+                  {editMode ? editedUser?.name.charAt(0) : profileUser.name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              
+              {editMode && (
+                <>
+                  <button 
+                    className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Camera className="h-4 w-4" />
+                  </button>
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                  />
+                </>
+              )}
+            </div>
             
             <div className="flex-grow">
-              <CardTitle className="text-2xl">{profileUser.name}</CardTitle>
-              <div className="flex items-center gap-2 text-muted-foreground mt-1">
-                <MapPin className="h-4 w-4" />
-                <span>{profileUser.location}</span>
-              </div>
-              <div className="flex items-center gap-2 text-muted-foreground mt-1">
-                <Calendar className="h-4 w-4" />
-                <span>Joined {profileUser.joinedDate.toLocaleDateString()}</span>
-              </div>
+              {editMode ? (
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <Label htmlFor="name">Name</Label>
+                    <Input 
+                      id="name" 
+                      value={editedUser?.name || ''}
+                      onChange={(e) => setEditedUser({...editedUser!, name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input 
+                      id="location"
+                      value={editedUser?.location || ''}
+                      onChange={(e) => setEditedUser({...editedUser!, location: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="bio">Bio</Label>
+                    <Textarea 
+                      id="bio"
+                      value={editedUser?.bio || ''}
+                      onChange={(e) => setEditedUser({...editedUser!, bio: e.target.value})}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <CardTitle className="text-2xl">{profileUser.name}</CardTitle>
+                  <div className="flex items-center gap-2 text-muted-foreground mt-1">
+                    <MapPin className="h-4 w-4" />
+                    <span>{profileUser.location}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground mt-1">
+                    <Calendar className="h-4 w-4" />
+                    <span>Joined {profileUser.joinedDate.toLocaleDateString()}</span>
+                  </div>
+                </>
+              )}
               
               <div className="mt-4 flex flex-wrap gap-2">
-                {isCurrentUserProfile ? (
-                  <Button variant="outline">Edit Profile</Button>
-                ) : (
+                {isCurrentUserProfile && !editMode && (
+                  <Button variant="outline" onClick={startEditing}>
+                    <Edit className="h-4 w-4 mr-2" /> Edit Profile
+                  </Button>
+                )}
+                
+                {isCurrentUserProfile && editMode && (
+                  <>
+                    <Button onClick={saveProfile}>
+                      <Save className="h-4 w-4 mr-2" /> Save Changes
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditMode(false)}>
+                      Cancel
+                    </Button>
+                  </>
+                )}
+                
+                {!isCurrentUserProfile && (
                   <Button onClick={() => navigate(`/messages/${profileUser.id}`)}>
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Message
@@ -101,10 +227,12 @@ export default function Profile() {
         </CardHeader>
         
         <CardContent className="pt-6">
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-2">About</h3>
-            <p>{profileUser.bio}</p>
-          </div>
+          {!editMode && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold mb-2">About</h3>
+              <p>{profileUser.bio}</p>
+            </div>
+          )}
           
           <Tabs defaultValue="teaching">
             <TabsList>
@@ -143,7 +271,7 @@ export default function Profile() {
                             id="name" 
                             value={skillName} 
                             onChange={(e) => setSkillName(e.target.value)}
-                            placeholder="e.g., Python Programming" 
+                            placeholder="e.g., Yoga" 
                           />
                         </div>
                         
@@ -184,6 +312,48 @@ export default function Profile() {
                                 ))}
                               </SelectContent>
                             </Select>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="skill-image">Skill Image</Label>
+                          <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-4 text-center">
+                            {skillImage ? (
+                              <div className="relative">
+                                <img 
+                                  src={skillImage} 
+                                  alt="Skill preview" 
+                                  className="w-full h-32 object-cover rounded-md mx-auto" 
+                                />
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm" 
+                                  className="absolute top-1 right-1"
+                                  onClick={() => setSkillImage(null)}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            ) : (
+                              <>
+                                <Label 
+                                  htmlFor="skill-image-input" 
+                                  className="cursor-pointer flex flex-col items-center justify-center h-24"
+                                >
+                                  <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
+                                  <span className="text-sm text-muted-foreground">
+                                    Click to upload an image
+                                  </span>
+                                </Label>
+                                <input 
+                                  id="skill-image-input"
+                                  type="file" 
+                                  className="hidden" 
+                                  accept="image/*"
+                                  onChange={handleSkillImageUpload}
+                                />
+                              </>
+                            )}
                           </div>
                         </div>
                         
@@ -281,7 +451,7 @@ export default function Profile() {
                             id="name" 
                             value={skillName} 
                             onChange={(e) => setSkillName(e.target.value)}
-                            placeholder="e.g., Guitar" 
+                            placeholder="e.g., Classical Dance" 
                           />
                         </div>
                         
@@ -322,6 +492,48 @@ export default function Profile() {
                                 ))}
                               </SelectContent>
                             </Select>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="skill-image-learn">Skill Image</Label>
+                          <div className="border-2 border-dashed border-muted-foreground/50 rounded-lg p-4 text-center">
+                            {skillImage ? (
+                              <div className="relative">
+                                <img 
+                                  src={skillImage} 
+                                  alt="Skill preview" 
+                                  className="w-full h-32 object-cover rounded-md mx-auto" 
+                                />
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm" 
+                                  className="absolute top-1 right-1"
+                                  onClick={() => setSkillImage(null)}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            ) : (
+                              <>
+                                <Label 
+                                  htmlFor="skill-image-input-learn" 
+                                  className="cursor-pointer flex flex-col items-center justify-center h-24"
+                                >
+                                  <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
+                                  <span className="text-sm text-muted-foreground">
+                                    Click to upload an image
+                                  </span>
+                                </Label>
+                                <input 
+                                  id="skill-image-input-learn"
+                                  type="file" 
+                                  className="hidden" 
+                                  accept="image/*"
+                                  onChange={handleSkillImageUpload}
+                                />
+                              </>
+                            )}
                           </div>
                         </div>
                         
