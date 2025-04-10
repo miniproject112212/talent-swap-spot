@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
 import { Message as MessageType } from '@/types';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 export default function Messages() {
   const { userId } = useParams();
