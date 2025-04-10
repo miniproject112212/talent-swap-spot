@@ -19,8 +19,8 @@ export default function Messages() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { messages, sendMessage, markAsRead } = useMessage();
   const { users, currentUser } = useUser();
-  const [selectedUser, setSelectedUser] = useState<number | null>(
-    userId ? parseInt(userId) : null
+  const [selectedUser, setSelectedUser] = useState<string | null>(
+    userId || null
   );
 
   // Filter conversations
@@ -31,14 +31,14 @@ export default function Messages() {
   // Get current conversation
   const currentConversation = messages.filter(
     (msg) =>
-      (msg.senderId === currentUser?.id && msg.recipientId === selectedUser) ||
-      (msg.recipientId === currentUser?.id && msg.senderId === selectedUser)
+      (msg.senderId === currentUser?.id && msg.receiverId === selectedUser) ||
+      (msg.receiverId === currentUser?.id && msg.senderId === selectedUser)
   ).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
   // Get unread message counts
-  const getUnreadCount = (userId: number) => {
+  const getUnreadCount = (userId: string) => {
     return messages.filter(
-      (msg) => msg.recipientId === currentUser?.id && msg.senderId === userId && !msg.read
+      (msg) => msg.receiverId === currentUser?.id && msg.senderId === userId && !msg.read
     ).length;
   };
 
@@ -46,7 +46,7 @@ export default function Messages() {
   useEffect(() => {
     if (selectedUser && currentUser) {
       const unreadMessages = messages.filter(
-        (msg) => msg.recipientId === currentUser.id && msg.senderId === selectedUser && !msg.read
+        (msg) => msg.receiverId === currentUser.id && msg.senderId === selectedUser && !msg.read
       );
       
       unreadMessages.forEach((msg) => {
@@ -60,13 +60,7 @@ export default function Messages() {
     if (message.trim() === '') return;
     
     if (currentUser && selectedUser) {
-      sendMessage({
-        senderId: currentUser.id,
-        recipientId: selectedUser,
-        content: message,
-        timestamp: new Date(),
-        read: false,
-      });
+      sendMessage(currentUser.id, selectedUser, message);
       setMessage('');
       toast("Message sent successfully!");
     } else {
@@ -75,9 +69,9 @@ export default function Messages() {
   };
 
   // Get recipient name
-  const getRecipientName = (userId: number) => {
+  const getRecipientName = (userId: string) => {
     const user = users.find((u) => u.id === userId);
-    return user ? `${user.firstName} ${user.lastName}` : 'Unknown User';
+    return user ? user.name : 'Unknown User';
   };
 
   // Format timestamp
@@ -115,11 +109,11 @@ export default function Messages() {
                       selectedUser === user.id ? 'bg-muted' : ''
                     }`}>
                       <Avatar className="h-10 w-10 mr-3">
-                        <AvatarImage src={user.avatar} alt={user.firstName} />
-                        <AvatarFallback>{user.firstName[0]}{user.lastName[0]}</AvatarFallback>
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <p className="font-medium">{user.firstName} {user.lastName}</p>
+                        <p className="font-medium">{user.name}</p>
                       </div>
                       {unreadCount > 0 && (
                         <span className="bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
@@ -240,11 +234,11 @@ export default function Messages() {
                   }}
                 >
                   <Avatar className="h-10 w-10 mr-3">
-                    <AvatarImage src={user.avatar} alt={user.firstName} />
-                    <AvatarFallback>{user.firstName[0]}{user.lastName[0]}</AvatarFallback>
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{user.firstName} {user.lastName}</p>
+                    <p className="font-medium">{user.name}</p>
                   </div>
                 </div>
               ))}

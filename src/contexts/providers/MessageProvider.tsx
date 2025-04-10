@@ -13,6 +13,7 @@ type MessageContextType = {
   initiateVideoCall: (senderId: string, receiverId: string) => void;
   acceptVideoCall: (senderId: string, receiverId: string) => void;
   rejectVideoCall: (senderId: string, receiverId: string) => void;
+  markAsRead: (messageId: string) => void;
 };
 
 export const MessageContext = createContext<MessageContextType | undefined>(undefined);
@@ -88,6 +89,14 @@ export function MessageProvider({ children }: { children: ReactNode }) {
     ).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
   };
 
+  const markAsRead = (messageId: string) => {
+    setMessages(prevMessages =>
+      prevMessages.map(msg =>
+        msg.id === messageId ? { ...msg, read: true } : msg
+      )
+    );
+  };
+
   const initiateVideoCall = (senderId: string, receiverId: string) => {
     sendMessage(
       senderId, 
@@ -141,6 +150,7 @@ export function MessageProvider({ children }: { children: ReactNode }) {
         initiateVideoCall,
         acceptVideoCall,
         rejectVideoCall,
+        markAsRead,
       }}
     >
       {children}
