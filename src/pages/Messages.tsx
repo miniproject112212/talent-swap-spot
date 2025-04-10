@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useMessages } from '@/contexts/providers/MessageProvider';
-import { useUsers } from '@/contexts/providers/UserProvider';
+import { useMessage } from '@/contexts/providers/MessageProvider';
+import { useUser } from '@/contexts/providers/UserProvider';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -17,8 +17,8 @@ export default function Messages() {
   const { userId } = useParams();
   const [message, setMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { messages, sendMessage, markAsRead } = useMessages();
-  const { users, currentUser } = useUsers();
+  const { messages, sendMessage, markAsRead } = useMessage();
+  const { users, currentUser } = useUser();
   const [selectedUser, setSelectedUser] = useState<number | null>(
     userId ? parseInt(userId) : null
   );
